@@ -220,7 +220,7 @@ export default {
         address: '',
         promo_code: '',
       },
-      baseUrl: 'http://localhost:8000/api/',
+      baseUrl: 'nukesul-boodaifpizza-5206.twc1.net/api/',
     };
   },
   computed: {

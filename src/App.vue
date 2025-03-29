@@ -156,7 +156,7 @@ export default {
       currentPage: 1,
       totalPages: 1,
       isMobile: window.innerWidth <= 640,
-      apiBaseUrl: 'http://localhost:8000/api/',
+      apiBaseUrl: 'nukesul-boodaifpizza-5206.twc1.net/api/',
     };
   },
   computed: {
