@@ -39,12 +39,12 @@
 
     <!-- Главный контент -->
     <div class="flex flex-grow pt-16">
-      <!-- Фиксированные категории при скролле -->
+      <!-- Фиксированные категории -->
       <aside class="fixed top-16 w-full sm:w-64 h-16 sm:h-full z-30 bg-light shadow-md sm:shadow-lg overflow-x-auto sm:overflow-y-auto transition-all duration-300">
         <div class="flex sm:flex-col p-2 sm:p-4 space-x-2 sm:space-x-0 sm:space-y-2">
-          <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="flex-shrink-0 py-2 px-3 rounded-lg bg-orange-light hover:bg-orange-dark hover:text-white cursor-pointer transition-all duration-300 sm:hover:scale-105 flex items-center space-x-2" :class="{ 'bg-orange-dark text-white': selectedCategory === category.id }">
-            <span class="text-lg">{{ category.emoji }}</span>
-            <span class="text-sm sm:text-base font-semibold hidden sm:block">{{ category.name }}</span>
+          <div v-for="category in categories" :key="category.id" @click="selectCategory(category.id)" class="flex-shrink-0 py-1 sm:py-2 px-2 sm:px-3 rounded-lg bg-orange-light hover:bg-orange-dark hover:text-white cursor-pointer transition-all duration-300 sm:hover:scale-105 flex items-center space-x-1 sm:space-x-2" :class="{ 'bg-orange-dark text-white': selectedCategory === category.id }">
+            <span class="text-base sm:text-lg">{{ category.emoji }}</span>
+            <span class="text-xs sm:text-base font-semibold">{{ category.name }}</span>
           </div>
         </div>
       </aside>
@@ -62,31 +62,16 @@
 
         <section v-else>
           <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-center text-orange-dark">Boodai Pizza</h2>
-          <div class="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <input v-model="searchQuery" type="text" placeholder="Найди пиццу или бургер..." class="w-full sm:w-64 p-2 rounded-lg border border-orange-dark focus:outline-none focus:ring-2 focus:ring-orange-dark text-dark">
-            <select v-model="sortOption" class="p-2 rounded-lg border border-orange-dark focus:outline-none text-dark">
-              <option value="price-asc">Цена: ↑</option>
-              <option value="price-desc">Цена: ↓</option>
-              <option value="popular">Популярное</option>
-            </select>
-          </div>
+          <input v-model="searchQuery" type="text" placeholder="Найди пиццу или бургер..." class="w-full sm:w-64 p-2 mb-4 rounded-lg border border-orange-dark focus:outline-none focus:ring-2 focus:ring-orange-dark text-dark">
           <ProductList
             :cart="cart"
             :branches="branches"
             @add-to-cart="addToCart"
             :selected-category="selectedCategory"
             :selected-branch="selectedBranch"
-            :sort-option="sortOption"
             :search-query="searchQuery"
-            :current-page="currentPage"
-            @update-page="updatePage"
             :is-dark-mode="isDarkMode"
           />
-          <div class="flex justify-center mt-6 space-x-4">
-            <button @click="prevPage" :disabled="currentPage === 1" class="px-4 py-2 bg-orange-dark text-white rounded-lg hover:bg-orange-light hover:text-dark transition-all duration-300 disabled:bg-gray-500">Назад</button>
-            <span class="text-base font-medium text-dark">Страница {{ currentPage }} из {{ totalPages }}</span>
-            <button @click="nextPage" :disabled="currentPage === totalPages" class="px-4 py-2 bg-orange-dark text-white rounded-lg hover:bg-orange-light hover:text-dark transition-all duration-300 disabled:bg-gray-500">Вперёд</button>
-          </div>
         </section>
       </main>
     </div>
@@ -107,6 +92,10 @@
             <li v-for="item in cart" :key="item.id" class="flex justify-between text-sm">
               <span>{{ item.name }} (x{{ item.quantity }})</span>
               <span>{{ (item.price * item.quantity).toFixed(2) }} ₽</span>
+            </li>
+            <li class="flex justify-between font-semibold text-orange-dark border-t pt-2">
+              <span>Итого:</span>
+              <span>{{ cartTotal }} ₽</span>
             </li>
           </ul>
           <p v-else class="text-dark text-sm">Корзина пуста</p>
@@ -137,16 +126,16 @@ export default {
       branches: [],
       selectedBranch: null,
       selectedCategory: null,
-      sortOption: 'price-asc',
       searchQuery: '',
-      currentPage: 1,
-      totalPages: 1,
       apiBaseUrl: 'https://boodaipizza-api.example.com/api/', // Замените на реальный API
     };
   },
   computed: {
     cartCount() {
       return this.cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    },
+    cartTotal() {
+      return this.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2);
     },
   },
   async mounted() {
@@ -186,7 +175,7 @@ export default {
     toggleCart() { this.showCart = !this.showCart; },
     toggleDarkMode() { this.isDarkMode = !this.isDarkMode; },
     selectBranch(branchId) { this.selectedBranch = branchId; },
-    selectCategory(categoryId) { this.selectedCategory = categoryId; this.currentPage = 1; },
+    selectCategory(categoryId) { this.selectedCategory = categoryId; },
     addToCart(product) {
       const existingItem = this.cart.find(item => item.id === product.id);
       if (existingItem) {
@@ -195,10 +184,19 @@ export default {
         this.cart.push({ ...product, quantity: product.quantity || 1 });
       }
     },
-    updatePage(pageCount) { this.totalPages = pageCount; },
-    prevPage() { if (this.currentPage > 1) this.currentPage--; },
-    nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
-    checkout() { alert('Оформление заказа в разработке!'); }, // Замените на реальную логику
+    checkout() {
+      // Пример отправки заказа на сервер
+      const order = {
+        branchId: this.selectedBranch,
+        items: this.cart,
+        total: this.cartTotal,
+        timestamp: new Date().toISOString(),
+      };
+      console.log('Отправка заказа:', order);
+      alert('Заказ отправлен!'); // Замените на реальную логику
+      this.cart = [];
+      this.showCart = false;
+    },
   },
 };
 </script>
